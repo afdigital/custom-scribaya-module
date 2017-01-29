@@ -1,0 +1,64 @@
+(function($){ 
+	$(document).ready(function(){
+      	/* Calculate number of rating parameters on the page viewed*/
+      	count_fivestar = $('.field-type-fivestar').size();
+		var vote_tags = $('.field-type-fivestar .field-label').text().split(':');
+		for(var i = 0; i < count_fivestar; i++)
+		{
+			votes[$.trim(vote_tags[i])] = 0;
+		}
+		if($('.star-first').hasClass('on'))
+		{}
+		else
+        {
+        	$('.field-name-field-overall').before('<input type="submit" name="submit_rate_button" class = "form-submit ajax-processed submit_rate_button" id = "submit_rate_button">');
+    	}
+            
+        /* Event to occur when submit button is clicked */
+		$('#submit_rate_button:not(.categoryLink-processed)').click(function () {
+			
+			/* Function to be called on return of ajax call */
+			var updateProducts = function(data) {
+			  $('#submit_rate_button').remove();
+			  $('.success_vote').remove();
+			  $('.field-name-field-overall').before('<p class = "ok success_vote">Thankyou for your votes.</p>');
+			  $('.error_vote').remove();
+			  $('.ajax-wait').remove();
+			}
+			
+			if(count == count_fivestar)	// if all the parameters are voted then:
+			{
+				node_url = window.location.pathname.split('/');
+				$.ajax({
+				  type: 'POST',
+				  url: "http://"+window.location.hostname+"/vote/register/ajax",
+				    progress:
+				    {
+				    	message: $('#submit_rate_button').before('<p class="ajax-wait">Please Wait...</p>')
+					},
+		  			success: updateProducts,
+			  		error: function(data1,data2,data3){
+			  			$('#submit_rate_button').remove();
+			  			 $('.success_vote').remove();
+			  			$('.error_vote').remove();
+			  			$('.ajax-wait').remove();
+			  			$('.field-name-field-overall').before('<p class="ok">Thankyou for your votes.</p>');
+				  	},
+					dataType: 'json',
+				  	data: {'votes': votes, 'url':node_url[2]},
+				});
+			}
+			else
+			{
+				$('.success_vote').remove();
+				$('.error_vote').remove();
+				$('.field-name-field-overall').before('<p class = "error error_vote">Please vote all the parameters.</p>');
+			}
+			return false;  // return false so the navigation stops here and not continue to the page in the link
+		})
+  });  
+})(jQuery);
+
+
+
+

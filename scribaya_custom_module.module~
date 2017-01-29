@@ -1,0 +1,558 @@
+ <?php
+/**
+ * Implementation of hook_field_overall_compute()
+ *
+ * Browse all the votes and calculate average
+ * of it.
+ *
+ */
+
+  function computed_field_field_overall_compute(&$entity_field, $entity_type, $entity, $field, $instance, $langcode, $items) {
+    $count = 0;
+    if($axis = fivestar_get_votes($entity_type, $entity->nid, 'narrative'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+    }
+    if($axis = fivestar_get_votes($entity_type, $entity->nid, 'characters'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+	}
+
+	if($axis = fivestar_get_votes($entity_type, $entity->nid, 'language'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+	}
+
+	if($axis = fivestar_get_votes($entity_type, $entity->nid, 'plot'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+	}
+
+	if($axis = fivestar_get_votes($entity_type, $entity->nid, 'engagement'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+    }
+
+    if($axis = fivestar_get_votes($entity_type, $entity->nid, 'realism'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+    }
+
+    if($axis = fivestar_get_votes($entity_type, $entity->nid, 'novelty'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+    }
+
+	if($axis = fivestar_get_votes($entity_type, $entity->nid, 'composition'))
+    {
+    	if(isset($axis['average']['value']))
+		{
+	    	$avg_axix[$count] = $axis['average']['value'];
+    		$count ++;
+		}
+    }
+
+	$total = 0;
+	for($i = 0; $i < $count; $i++)
+	{
+		$total += $avg_axix[$i];
+	}
+
+	if($count > 0 )
+	    $entity_field[0]['value'] = ($total) / $count;
+    else
+    	$entity_field[0]['value'] = 0;
+    return $entity_field[0]['value'];
+  }
+
+/**
+ * Implementation of hook_field_overall_display()
+ *
+ * Convert overall field's display into five stars.
+ *
+ */
+  function computed_field_field_overall_display($field, $entity_field_item, $entity_lang, $langcode) {
+    $moyenne = $entity_field_item['value'];
+    $variables = array("rating" => $moyenne, "stars" => 5);
+    $variables["widget"]["name"] = "oxygen";
+    $variables["widget"]["css"] = "sites/all/modules/fivestar/widgets/oxygen/oxygen.css";
+    drupal_add_css(drupal_get_path('module', 'fivestar') .'/css/fivestar.css');
+
+/*    return theme('fivestar_static', $variables) . "<div class = 'left-pull votes' style = 'display:none;'><span itemprop='review' itemscope itemtype='http://data-vocabulary.org/Review-aggregate'><span itemprop='rating'>".number_format($entity_field_item['value']/20, 1, '.', '')."</span> stars, based on <span itemprop='count'>".$_SESSION['vote_count']."</span> reviews</span>(".number_format($entity_field_item['value']/20, 1, '.', '') . "/5) </div>";*/
+
+return theme('fivestar_static', $variables) . "<div class = 'left-pull votes''><div  style = 'display:none;' itemprop='aggregateRating'    itemscope itemtype='http://schema.org/AggregateRating'>   Rated <span itemprop='ratingValue'>".number_format($entity_field_item['value']/20, 1, '.', '')."</span>/5   based on <span itemprop='reviewCount'>".$_SESSION['vote_count']."</span> customer reviews  </div>[".number_format($entity_field_item['value']/20, 1, '.', '') . "/5]</div>";
+  }
+
+  $css = ".field-type-fivestar {
+			width:50%;
+			float:left;
+		  }
+		  .field-name-field-overall {
+		  	clear:both;
+		  }
+		  .field-name-field-overall > .field-items {
+		  	width:50%;
+		  }";
+  drupal_add_css($css,'inline');
+
+
+
+
+  /**
+  * Implementation of hook_field_overall_compute()
+  *
+  * count total number of comments for a particular node.
+  *
+  */
+  function computed_field_field_comment_count_compute(&$entity_field, $entity_type, $entity, $field, $instance, $langcode, $items) {
+	if (!$entity->nid) {
+	  node_save($entity);
+	}
+	$entity_field[0]['value'] = $entity->nid;
+   	return $entity_field[0]['value'];
+  }
+
+  function computed_field_field_comment_count_display($field, $entity_field_item, $entity_lang, $langcode) {
+	$select = db_query('select comment_count from sc_node_comment_statistics where nid ='.$entity_field_item['value']);
+	$number = 	$select->fetchField();
+   	return $number;
+  }
+
+  /**
+  * Implementation of hook_field_view_count_compute()
+  *
+  * count total number of views for a particular node.
+  *
+  */
+  function computed_field_field_view_count_compute(&$entity_field, $entity_type, $entity, $field, $instance, $langcode, $items) {
+	if (!$entity->nid) {
+	  node_save($entity);
+	}
+	$entity_field[0]['value'] = $entity->nid;
+   	return $entity_field[0]['value'];
+  }
+
+  function computed_field_field_view_count_display($field, $entity_field_item, $entity_lang, $langcode) {
+	global $user;
+	$node = menu_get_object();
+	if($node->uid == $user->uid)
+	{
+		$select = db_query('UPDATE sc_node_counter set totalcount = totalcount-1 where nid ='.$entity_field_item['value']);
+	}
+	$select = db_query('select totalcount from sc_node_counter where nid ='.$entity_field_item['value']);
+	$number = 	$select->fetchField();
+   	return $number;
+  }
+
+  /**
+  * Implementation of hook_field_vote_count_compute()
+  *
+  * count total number of votes for a particular node.
+  *
+  */
+  function computed_field_field_vote_count_compute(&$entity_field, $entity_type, $entity, $field, $instance, $langcode, $items) {
+	if (!$entity->nid) {
+	  node_save($entity);
+	}
+	$entity_field[0]['value'] = $entity->nid;
+   	return $entity_field[0]['value'];
+  }
+
+
+  function computed_field_field_vote_count_display($field, $entity_field_item, $entity_lang, $langcode) {
+
+	$select = db_query('select count(tag) from sc_votingapi_vote where tag = :lang and entity_id = :ent', array(':lang'=>'Language',':ent'=>$entity_field_item['value']));
+	$number = 	$select->fetchField();
+	$_SESSION['vote_count'] = $number;
+   	return $number;
+  }
+
+
+  /* Adult Content Restriction
+   *
+   *Restricts contect according to users age.
+   */
+
+  function is_cron() {
+    if (php_sapi_name() == 'cli') {
+      // This may mean cron via Drush
+      return TRUE;
+    }
+    if(preg_match('/\/cron.php$/', $_SERVER['SCRIPT_NAME'])) {
+      //check for cron.php in the url. *preg_match accommodates sites in sub-directories
+      return TRUE;
+    }
+    if (arg(0) == 'admin' && arg(1) == 'reports' && arg(2) == 'status' && arg(3) == 'run-cron') {
+      return TRUE;
+    }
+    return FALSE;
+  }//end function is_cron()
+
+  function scribaya_custom_module_node_view($node, $view_mode)
+  {
+
+  	/*$_SESSION['age'] = '';
+	$_SESSION['underage'] = '';
+	$_SESSION['destination'] ='';
+	$_SESSION['underage_flag'] = 0;
+
+	if($node->type == "post_content")
+	{
+		$taxonomy_term = $node->field_adult_content_rating_new['und'][0]['taxonomy_term']->name;
+		if( $taxonomy_term == "Adults only (18 and above)" || $taxonomy_term == "Pre-teens (12 and above)")
+		{
+
+			global $user;
+			if(user_is_anonymous())
+			{
+				$_SESSION['destination'] = drupal_get_destination();
+				$_SESSION['underage_flag'] = 1;
+				//drupal_goto("underage");
+			}
+			else if ( in_array('administrator', $user->roles)) {
+			}
+			else
+			{
+				$age = db_query("SELECT DATEDIFF(CURRENT_DATE, field_dob_value)/365 FROM sc_field_data_field_dob where entity_id = ".$user->uid)->fetchField();
+				$_SESSION['age'] = $age;
+				if($age < 13)
+				{
+					$_SESSION['underage'] = 13;
+					$_SESSION['underage_flag'] = 1;
+					drupal_goto("underage");
+				}
+				elseif($taxonomy_term == "Adults only (18 and above)" && $age <= 18)
+				{
+					$_SESSION['underage'] = 18;
+					$_SESSION['underage_flag'] = 1;
+					drupal_goto("underage");
+				}
+			}
+		}
+	}*/
+
+
+
+$script_name= str_replace(base_path(), '', $_SERVER['SCRIPT_NAME']);
+
+$arg0 = arg(0);
+$arg2 = arg(2);
+
+if($script_name != 'cron.php'
+   && $_SERVER['REQUEST_URI'] != '/admin/reports/status/run-cron'
+   && !($arg0 == 'node' && !empty($arg2))
+   && !($arg0 == 'short-stories')
+   && !($arg0 == 'poem')
+   && !($arg0 == 'novels')
+   )
+{
+	$_SESSION['age'] = '';
+	$_SESSION['underage'] = '';
+	$_SESSION['destination'] ='';
+	$_SESSION['underage_flag'] = '';
+
+	global $user;
+	if ( in_array('administrator', $user->roles)) {
+	}
+	else
+	{
+		if($node->type == "post_content") {
+			$taxonomy_term = $node->field_adult_content_rating_new['und'][0]['taxonomy_term']->name;
+			if( $taxonomy_term == "Adults only (18 and above)" || $taxonomy_term == "Pre-teens (12 and above)")
+			{
+				if( ! user_is_logged_in()) {
+					$_SESSION['destination'] = drupal_get_destination();
+					$_SESSION['underage_flag'] = 1;
+					watchdog('SCribaya_custom_module', t("Check variable uid = %uid"), array('%uid'=>arg(0)), WATCHDOG_NOTICE, $link = NULL);
+					watchdog('SCribaya_custom_module', t("User (Anon) = %uid"), array('%uid'=> 'anony redirect' ), WATCHDOG_NOTICE, $link = NULL);
+					//drupal_goto("underage");
+					drupal_access_denied();
+					module_invoke_all('exit');
+					exit();
+
+				}
+				else{
+					$age = db_query("SELECT DATEDIFF(CURRENT_DATE, field_dob_value)/365 FROM sc_field_data_field_dob where entity_id = ".$user->uid)->fetchField();
+					if($age)
+					{
+						$_SESSION['age'] = $age;
+						if($age < 13)
+						{
+							$_SESSION['underage'] = 13;
+							$_SESSION['underage_flag'] = 1;
+							watchdog('SCribaya_custom_module', t("User (13) = %uid"), array('%uid'=> 'user under 13' ), WATCHDOG_NOTICE, $link = NULL);
+							//drupal_goto("underage");
+							drupal_access_denied();
+							module_invoke_all('exit');
+							exit();
+						}
+						elseif($taxonomy_term == "Adults only (18 and above)" && $age <= 18)
+						{
+							$_SESSION['underage'] = 18;
+							$_SESSION['underage_flag'] = 1;
+							watchdog('SCribaya_custom_module', t("User (18) = %uid"), array('%uid'=> 'user under 18' ), WATCHDOG_NOTICE, $link = NULL);
+							//drupal_goto("underage");
+							drupal_access_denied();
+							module_invoke_all('exit');
+							exit();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	}
+
+
+
+  }	// End of Adult content warning
+
+  /**
+  * Implementation of hook_form_alter()
+  *
+  * Hides Terms and Conditions from Edit form
+  */
+
+  function scribaya_custom_module_form_alter(&$form, &$form_state)
+  {
+  	if ($form['#id'] == 'user-profile-form') {
+	  	$form['legal']['#access'] = FALSE;
+	  	drupal_add_js(drupal_get_path('module', 'scribaya_custom_module') .'/js/limit_userpic_upload.js', 'file');
+	  	unset($form['contact']);
+	}
+
+	if ($form['#id'] == 'collection-node-form')
+	{
+		// ECHO FORM
+		if($form['title']['#value'] == 'Default')
+			$form['title']['#type'] = 'hidden';
+	}
+
+	/****** Set default collection on new post ******/
+	if ($form['#id'] == 'post-content-node-form')
+	{
+		if($form['field_collection']['und'][0]['nid']['#default_value'] == "")
+		{
+			global $user;
+			$select = db_query("SELECT nid from sc_node where type='collection' and title='Default' and uid = ".$user->uid);
+			$form['field_collection']['und'][0]['nid']['#default_value'] = $select->fetchField();
+		}
+	}
+
+	/* Disable WYSIWYG for mobile devices */
+	if ($form['#id'] == 'comment-form')
+	{
+		$useragent=$_SERVER['HTTP_USER_AGENT'];
+		if(preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i',$useragent)||preg_match('/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i',substr($useragent,0,4))) {
+			$form['comment_body']['und'][0]['#wysiwyg'] = FALSE;
+		}
+		else {
+			$form['comment_body']['und'][0]['#wysiwyg'] = TRUE;
+		}
+	}
+  }
+
+
+
+
+  /**
+  * Implementation of hook_node_load()
+  *
+  * Add js file (Show logic to vote) only if user is logged in.
+  *
+  */
+  function scribaya_custom_module_node_load($nodes,$types) {
+	global $user;
+	if($user->uid != 0)
+	  drupal_add_js(drupal_get_path('module', 'scribaya_custom_module') .'/js/scribaya_custom_module.js', 'file');
+	else
+		drupal_add_js(drupal_get_path('module', 'scribaya_custom_module') .'/js/scribaya_custom_module_loggedout_user.js', 'file');
+  }
+
+  /**
+  * Implementation of hook_menu()
+  *
+  * Declaring an ajax function to handel users votes.
+  *
+  */
+  function scribaya_custom_module_menu() {
+    return array(
+      'vote/register/ajax' => array(
+      'page callback' => 'vote_register_ajax_callback',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+      ),
+      'get/node/id' => array(
+      'page callback' => 'get_node_id_callback',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+      ),
+      'underage' => array(			// Page for Adult content warning
+      'title' => 'Content Restricted',
+      'page callback' => 'underage_callback',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+      ),
+      'collection_genre' => array(			// Callback for getting details (genre and tags) of collection.
+      'title' => 'Collection Genre',
+      'page callback' => 'collection_genre_callback',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+      ),
+    );
+  }
+
+  /**
+  *
+  * Show underage page.
+  *
+  */
+
+  function underage_callback() {
+  	/*global $user;
+  	if($_SESSION['underage_flag'] ==1)
+	{
+		$_SESSION['underage_flag'] = 0;
+		if($user->uid == 0)
+			return array('#markup' => t('<div class = "underage"> Please <a href = "login?destination='.$_SESSION['destination']['destination'].'" class = "font_bold">Login</a> or <a href = "register?destination='.$_SESSION['destination']['destination'].'" class = "font_bold">Signup</a> to view this content.</div>'));
+
+		if($_SESSION['age'] < 13 && $_SESSION['underage'] == 12)
+			return array('#markup' => t('<div class = "underage">Access Denied: You are underage to view the content. You can view this content after <span class = "font_bold">'.round(($_SESSION['underage']-$_SESSION['age'])*365).' days. </span></div>'));
+		if($_SESSION['age'] < 18 && $_SESSION['underage'] == 18)
+			return array('#markup' => t('<div class = "underage">Access Denied: You are underage to view the content. You can view this content after <span class = "font_bold">'.round(($_SESSION['underage']-$_SESSION['age'])*365).' days. </span></div>'));
+	}
+	$_SESSION['underage_flag'] = 0;
+	drupal_goto($GLOBALS['base_url']);*/
+
+	global $user;
+	$underage_flag = $_SESSION['underage_flag'] ? $_SESSION['underage_flag'] : 0;
+	$destination = $_SESSION['destination']['destination'] ? $_SESSION['destination']['destination'] : "";
+	$age = $_SESSION['age'] ? $_SESSION['age'] : 0;
+	$underage = $_SESSION['underage'] ? $_SESSION['underage'] : 0;
+
+	unset($_SESSION['underage_flag']);
+	unset($_SESSION['destination']);
+	unset($_SESSION['age']);
+	unset($_SESSION['underage']);
+
+	if($underage_flag == 1)
+	{
+		if( ! user_is_logged_in()) {
+			return array('#markup' => t('<div class = "underage"> Please <a href = "login?destination='.$destination.'" class = "font_bold">Login</a> or <a href = "register?destination='.$destination.'" class = "font_bold">Signup</a> to view this content.</div>'));
+		}
+
+		if($age < 13 && $underage == 13) {
+			return array('#markup' => t('<div class = "underage">Access Denied: You are underage to view the content. You can view this content after <span class = "font_bold">'.round(($underage-$age)*365).' days. </span></div>'));
+		}
+		if($age < 18 && $underage == 18)
+			return array('#markup' => t('<div class = "underage">Access Denied: You are underage to view the content. You can view this content after <span class = "font_bold">'.round(($underage-$age)*365).' days. </span></div>'));
+	}
+	return array('#markup' => t('<div class = "underage">You are not supposed to be here. Go <a href = "'.$GLOBALS['base_url'].'" title = "Home Page" >Home </a></div>'));
+
+
+  }
+
+
+  /**
+  *
+  * Writing callback fn for users voting.
+  *
+  */
+
+  function vote_register_ajax_callback() {
+	$alias = explode('/',drupal_get_normal_path($_POST['url']));	// Get node_id from alias name
+	$average = array();
+	foreach($_POST['votes'] as $key => $value)
+	{
+	  $votes = _fivestar_cast_vote('node', $alias[1], $value, $key);	// Registering all the users votes in the database.
+	  $var = fivestar_get_votes('node',$alias[1],$key);
+	  array_push($average,$var['average']['value']);
+	}
+	db_query("DELETE FROM sc_cache_field WHERE cid = 'field:node:".$alias[1]."'");
+	$avg = ((array_sum($average)/count($average))*(5/100));	// Calculate average of all the parameters
+	$num_updated = db_update('field_data_field_overall')
+	   	->fields(array(
+			'field_overall_value' => (array_sum($average)/count($average)),
+		))
+		->condition('entity_id',$alias[1], '=')
+		->execute();
+
+	return drupal_json_output(array('op'=>number_format($avg, 1, '.', ''),'a'=>$_POST['votes'],'node_id'=>$alias,'id'=>array_sum($average)));	// Return average
+  }
+
+  /**
+  *
+  * Writing callback fn for getting node id.
+  *
+  */
+
+  function get_node_id_callback() {
+	  $alias = explode('/',drupal_get_normal_path($_POST['url']));	// Get node_id from alias name
+	  return drupal_json_output(array('node_id'=>$alias[1]));
+  }
+
+  /**
+  *
+  * Writing callback fn for getting genres and tags of selected collection.
+  *
+  */
+
+  function collection_genre_callback() {
+	$collection_name = $_POST['collection_name'];	// Get name of collection selected by user
+	global $user;
+	$genre_list = array();
+	$tag_list = array();
+	$node_nid = db_query("SELECT nid from sc_node where type= :type and title= :title and uid= :uid", array(':type'=>'Collection',':title'=>$collection_name,':uid'=>$user->uid))->fetchField();	// Getting node->id from db
+
+	$genres = db_query("SELECT field_genres_new_tid from sc_field_data_field_genres_new where entity_id = :entityid",array(':entityid'=>$node_nid))->fetchAll();	// Getting genre based on nid
+	/* Storing all genres in a variable */
+	foreach ($genres as $value) {
+			array_push($genre_list,$value->field_genres_new_tid);
+	}
+
+	$tags = db_query("SELECT field_tags_tid from sc_field_data_field_tags where entity_id = :entityid",array(':entityid'=>$node_nid))->fetchAll();	// Getting tags based on nid
+
+	foreach ($tags as $value) {
+		$tag_name = db_query("SELECT name from sc_taxonomy_term_data where tid = :entityid",array(':entityid'=>$value->field_tags_tid))->fetchField();	// Getting tag names based on tid
+			array_push($tag_list,$tag_name);	/* Storing all tag names in a variable */
+	}
+	return drupal_json_output(array('tag'=>$tag_list,'genre'=>$genre_list));	// Return tag names and genres to user.
+  }
+
+  /**
+  *
+  * Remove Delete option from Location Module
+  *
+  */
+  function scribaya_custom_module_location_element_alter(&$element) {
+  	unset($element['delete_location']);
+  }

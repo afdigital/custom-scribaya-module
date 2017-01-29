@@ -1,0 +1,7 @@
+name = Scribaya Custom Module
+description = Contains all the custom codes
+core = 7.x
+
+; Information added by Satchit Shenoy on 2013-05-08
+version = "7.x-1.0"
+core = "7.x"
